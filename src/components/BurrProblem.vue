@@ -11,7 +11,7 @@
 
 <script>
 
-import {BABYLON, Entity} from '../../../vue-babylonjs/src';
+import {Entity} from 'vue-babylonjs';
 import BurrShape from "./BurrShape.vue"
 import { rotationVector } from "./burrUtils.js";
 

@@ -25,16 +25,19 @@
 var convert = require('xml-js');
 var zlib = require('zlib');
 
-import axios from 'axios'
+//import axios from 'axios'
 
 import Vue from 'vue';
-import {BABYLON, Scene, Camera, Entity, Box, HemisphericLight, Property} from '../../../vue-babylonjs/src';
-import * as GUI from 'babylonjs-gui'
-import BurrShape from "./BurrShape"
-import BurrProblem from "./BurrProblem"
-import { xml2json } from 'xml-js';
+import vb from 'vue-babylonjs';
+Vue.use(vb);
+import {BABYLON, Scene, Camera, Entity, Box, HemisphericLight, Property} from 'vue-babylonjs';
+// import BurrShape from "./BurrShape"
+import BurrProblem from "./BurrProblem";
+import * as GUI from 'babylonjs-gui';
 
-BABYLON.GUI=GUI
+// import { xml2json } from 'xml-js';
+
+// BABYLON.GUI=GUI
 
 let defaultData = { "puzzle": [{  
                      "shapes": [{ 
@@ -71,7 +74,7 @@ let defaultData = { "puzzle": [{
 
 export default {
   name: 'HelloWorld',
-  components: {BurrShape, BurrProblem, Scene, Camera, Entity, Box, HemisphericLight, Property},
+  components: {BurrProblem, Scene, Camera, Entity, Box, HemisphericLight, Property},
   data() {
      return {
        myFileName: "box.xmpuzzle",
@@ -208,39 +211,39 @@ export default {
       this.highlightLayer.innerGlow=true
       this.highlightLayer.outerGlow=false
       // test GUI
-      var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("ui1", true, this.scene);
-      var theStatusPanel = new BABYLON.GUI.StackPanel();
+      var advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("ui1", true, this.scene);
+      var theStatusPanel = new GUI.StackPanel();
       theStatusPanel.width = "220px";
       theStatusPanel.fontSize = "14px";
       theStatusPanel.color="white"
-      theStatusPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-      theStatusPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      theStatusPanel.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      theStatusPanel.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
       advancedTexture.addControl(theStatusPanel);
-      this.guiComplexity=new BABYLON.GUI.TextBlock()
+      this.guiComplexity=new GUI.TextBlock()
       this.guiComplexity.text="complexity: " + this.complexity
       this.guiComplexity.height="20px"
       theStatusPanel.addControl(this.guiComplexity)
-      this.guiCurrentMove=new BABYLON.GUI.TextBlock()
+      this.guiCurrentMove=new GUI.TextBlock()
       this.guiCurrentMove.text="current state index: " + this.complexity
       this.guiCurrentMove.height="20px"
       theStatusPanel.addControl(this.guiCurrentMove)
-      this.guiHighlightNextMove = new BABYLON.GUI.Checkbox();
+      this.guiHighlightNextMove = new GUI.Checkbox();
       this.guiHighlightNextMove.width = "20px";
       this.guiHighlightNextMove.height = "20px";
       this.guiHighlightNextMove.isChecked = false;
       this.guiHighlightNextMove.color = "green";
       this.guiHighlightNextMove.onIsCheckedChangedObservable.add(this.updateVisuals)
-      var panelForCheckbox = BABYLON.GUI.Control.AddHeader(this.guiHighlightNextMove, "Highlight next move", "140px", { isHorizontal: true, controlFirst: true});
+      var panelForCheckbox = GUI.Control.AddHeader(this.guiHighlightNextMove, "Highlight next move", "140px", { isHorizontal: true, controlFirst: true});
       panelForCheckbox.color = "white";
       panelForCheckbox.height = "20px";
-      panelForCheckbox.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+      panelForCheckbox.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
       theStatusPanel.addControl(panelForCheckbox)
-/*      var button1 = BABYLON.GUI.Button.CreateSimpleButton("but1", "Show hint");
+/*      var button1 = GUI.Button.CreateSimpleButton("but1", "Show hint");
       button1.width = 1;
       button1.height = "20px";
       button1.fontSize = 14;
       button1.background = "green";
-      //button1.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      //button1.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
       theStatusPanel.addControl(button1);
 */    },
     onComplete(obj) {

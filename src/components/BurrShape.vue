@@ -9,8 +9,8 @@
 
 <script>
 
-import {BABYLON, Box} from '../../../vue-babylonjs/src';
 import { rotationVector } from "./burrUtils.js";
+import { BABYLON, Box } from 'vue-babylonjs';
 
 export default {
   name: 'BurrShape',
