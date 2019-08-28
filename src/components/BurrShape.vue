@@ -108,13 +108,13 @@ export default {
       })
       // give a material
       var myMaterial = new BABYLON.StandardMaterial("myMaterial", this.myBoxes[0].getScene());
-      myMaterial.diffuseTexture=new BABYLON.Texture("materials/Wood14_col.jpg", this.myBoxes[0].getScene())
+      myMaterial.diffuseTexture=new BABYLON.Texture("materials/Wood11_col.jpg", this.myBoxes[0].getScene())
       myMaterial.diffuseTexture.uScale=0.2
       myMaterial.diffuseTexture.vScale=0.2
-      myMaterial.bumpTexture=new BABYLON.Texture("materials/Wood14_nrm.jpg", this.myBoxes[0].getScene())
+      myMaterial.bumpTexture=new BABYLON.Texture("materials/Wood11_nrm.jpg", this.myBoxes[0].getScene())
       myMaterial.bumpTexture.uScale=0.2
       myMaterial.bumpTexture.vScale=0.2
-      myMaterial.specularTexture=new BABYLON.Texture("materials/Wood14_rgh.jpg", this.myBoxes[0].getScene())
+      myMaterial.specularTexture=new BABYLON.Texture("materials/Wood11_rgh.jpg", this.myBoxes[0].getScene())
       myMaterial.specularTexture.uScale=0.2
       myMaterial.specularTexture.vScale=0.2
 
