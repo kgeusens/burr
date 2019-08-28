@@ -1,7 +1,8 @@
 <template>
-  <div id="app">
+  <div id="app" oncontextmenu="return false">
     <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <input v-on:change="onFileChange" type="file"/>
+    <HelloWorld v-bind:myFile="myFile" msg="Welcome to Your Vue.js App"/>
   </div>
 </template>
 
@@ -12,6 +13,23 @@ export default {
   name: 'app',
   components: {
     HelloWorld
+  },
+  data() { return {
+      myFile: null
+    }
+  },
+  methods: {
+    onFileChange(e) {
+      var files = e.target.files || e.dataTransfer.files
+      if (files.length > 0) {
+        this.myFile=files[0]
+      }
+    }
+  },
+  watch: {
+    myFile(newVal, oldVal) {
+//      console.log(newVal, oldVal)
+    }
   }
 }
 </script>
