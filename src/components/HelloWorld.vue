@@ -362,7 +362,6 @@ export default {
     jsonFile(newVal) {
       this.myCurrentState=this.statusArray.states[0]
       this.guiHighlightNextMove.isChecked = false
-      console.log(newVal)
     },
     complexity() {
       this.guiComplexity.text="complexity: " + this.complexity

@@ -1,7 +1,7 @@
 <template>
   <div>
       <div v-for="vox in voxelPositions" :key="vox.id">
-        <Box v-model="myBoxes[vox.id]" :position="vox.position">
+        <Box ref="myBoxes" :position="vox.position">
         </Box>
       </div>  
   </div>
@@ -23,16 +23,20 @@ export default {
   data() {
     return {
       id: null,
-      myBoxes: [],
+//      myBoxes: [],
       myEntity: null,
       theShapeMesh: null
     }
   },
   mounted () {
     this.id = this._uid
+    console.log("mounted", this.$refs.myBoxes)
   },
   beforeDestroy() {
     if (this.theShapeMesh) this.theShapeMesh.dispose()
+  },
+  updated() {
+    console.log("updated", this.$refs.myBoxes)
   },
   methods: {
     isVisible(dx,dy,dz) { return ( this.stateString[ (dz)*this.x*this.y + (dy)*this.x + (dx) ] == "#") },
@@ -40,6 +44,9 @@ export default {
     rotate(idx) { return rotationVector(idx); }
   },
   computed: {
+    myBoxes() {
+      return this.$refs.myBoxes
+    },
     stateString() {
       return this.entity._text[0].replace(/\d+/g,""); //remove color code
     },
@@ -63,7 +70,7 @@ export default {
   },
   watch: {
     myBoxes() {
-      if (this.theShapeMesh)  { this.theShapeMesh.dispose()}
+/*      if (this.theShapeMesh)  { this.theShapeMesh.dispose()}
       // the boxes that make up this shape have now been created.
       // We will merge them into one shape and and hide the individual boxes
       var theCSG=BABYLON.CSG.FromMesh(this.myBoxes[0])
@@ -119,6 +126,7 @@ export default {
       myMaterial.specularTexture.vScale=0.2
 
       this.theShapeMesh.material = myMaterial;
+*/    
     }
   }
 }
