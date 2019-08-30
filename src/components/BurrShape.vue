@@ -43,7 +43,11 @@ export default {
       this.buildShape()
     },
     onBoxComplete(evt) {
-//      console.log("onBoxComplete", this._uid, this.$refs.myBoxes.length)
+      console.log("onBoxComplete", this._uid, this.$refs.myBoxes.length)
+      evt.entity.isVisible=false;
+      evt.entity.scaling=new BABYLON.Vector3(0.95,0.95,0.95)
+//      evt.entity.parent=this.theShapeMesh;
+      evt.entity.checkCollisions=true;
     },
     isVisible(dx,dy,dz) { return ( this.stateString[ (dz)*this.x*this.y + (dy)*this.x + (dx) ] == "#") },
     isEmpty(dx,dy,dz) { return ( this.stateString[ (dz)*this.x*this.y + (dy)*this.x + (dx) ] == "_") },
@@ -54,7 +58,8 @@ export default {
       this.myBoxes=this.$refs.myBoxes
 
       if (this.theShapeMesh)  { this.theShapeMesh.dispose()}
-      var theCSG=BABYLON.CSG.FromMesh(this.myBoxes[0].$entity)
+//
+      var theCSG=BABYLON.CSG.FromMesh(this.myBoxes[0].$entity) //
 
       var bbox=BABYLON.Mesh.CreateBox("bbox",1)
       bbox.parent=this.myEntity
@@ -65,12 +70,11 @@ export default {
       dimensions=dimensions.addInPlace({x:delta, y:delta, z:delta})
       bbox.scaling=dimensions
       bbox.position=translation
+//
+//      bbox.parent=this.myEntity //
+//      var theCSG = BABYLON.CSG.FromMesh(bbox) //
+      theCSG.unionInPlace(BABYLON.CSG.FromMesh(bbox)) //
 
-//      bbox.parent=this.myEntity
-//      bbox.computeWorldMatrix()
-//      var theCSG = BABYLON.CSG.FromMesh(bbox)
-
-      theCSG.unionInPlace(BABYLON.CSG.FromMesh(bbox))
       bbox.dispose()
       // next punch some holes
       var hole=null
@@ -89,6 +93,8 @@ export default {
       // give the ShapeMesh the same parent as the individual boxes
       this.theShapeMesh=theCSG.toMesh({scene: this.myEntity.getScene()})
       this.theShapeMesh.parent=this.myEntity
+      this.theShapeMesh.computeWorldMatrix(true)
+      console.log("theShapeMesh", this.theShapeMesh)
     },
     reShape() {
 //      debugger
