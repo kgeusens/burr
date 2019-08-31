@@ -330,8 +330,10 @@ export default {
       if (this.currentStateIndex >= 0) {
         for (let idx of this.calcNextMovingShapes(this.currentStateIndex)) {
           if (this.$refs.someProblem.myShapeEntities[idx] != undefined) {
-            if (this.guiHighlightNextMove.isChecked)
-                this.highlightLayer.addMesh(this.$refs.someProblem.myShapeEntities[idx].getChildMeshes(true)[0], BABYLON.Color3.Green())
+            if (this.guiHighlightNextMove.isChecked) {
+              console.log("highlighting Mesh")
+              this.highlightLayer.addMesh(this.$refs.someProblem.myShapeEntities[idx].getChildMeshes(true)[0], BABYLON.Color3.Green())
+            }
             else
               this.highlightLayer.removeMesh(this.$refs.someProblem.myShapeEntities[idx].getChildMeshes(true)[0], BABYLON.Color3.Green())
           }

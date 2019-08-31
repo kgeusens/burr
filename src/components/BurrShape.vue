@@ -1,9 +1,9 @@
 <template>
   <div>
-      <Entity v-model="myEntity" v-on:complete="onComplete">
+      <Box v-model="theShapeMesh" v-on:complete="onComplete">
         <Box v-for="vox in voxelPositions" :key="vox.id" ref="myBoxes" :position="vox.position" @complete="onBoxComplete">
         </Box>
-      </Entity>  
+      </Box>  
   </div>
 </template>
 
@@ -38,133 +38,62 @@ export default {
   },
   methods: {
     onComplete() {
-      console.log("onComplete", this._uid)
-//      this.reShape() 
-      this.buildShape()
+      console.log("onComplete", this._uid, this.theShapeMesh)
+      this.buildShapeMesh()
     },
     onBoxComplete(evt) {
       console.log("onBoxComplete", this._uid, this.$refs.myBoxes.length)
       evt.entity.isVisible=false;
-      evt.entity.scaling=new BABYLON.Vector3(0.95,0.95,0.95)
+      evt.entity.scaling=new BABYLON.Vector3(0.98,0.98,0.98)
 //      evt.entity.parent=this.theShapeMesh;
       evt.entity.checkCollisions=true;
     },
     isVisible(dx,dy,dz) { return ( this.stateString[ (dz)*this.x*this.y + (dy)*this.x + (dx) ] == "#") },
     isEmpty(dx,dy,dz) { return ( this.stateString[ (dz)*this.x*this.y + (dy)*this.x + (dx) ] == "_") },
     rotate(idx) { return rotationVector(idx); },
-    buildShape(){
+    buildShapeMesh(){
       // this implementation does not rely on the BOX meshes being present.
       // It constructs the shape based on the entity string that is passed as prop 
-      this.myBoxes=this.$refs.myBoxes
 
-      if (this.theShapeMesh)  { this.theShapeMesh.dispose()}
-//
-      var theCSG=BABYLON.CSG.FromMesh(this.myBoxes[0].$entity) //
-
-      var bbox=BABYLON.Mesh.CreateBox("bbox",1)
-      bbox.parent=this.myEntity
+      // Build the shape using CSG only
+      // Calculate the vertices of the bounding box starting from a standard box (default of theShapeMesh)
+      var vertexData = BABYLON.VertexData.ExtractFromMesh(this.theShapeMesh);
       var dimensions=new BABYLON.Vector3(this.x, this.y, this.z)
       var translation=dimensions.multiplyByFloats(0.5,0.5,0.5)
-      translation.addInPlace({x:-0.5, y:-0.5, z:-0.5})
       var delta=-0.05
-      dimensions=dimensions.addInPlace({x:delta, y:delta, z:delta})
-      bbox.scaling=dimensions
-      bbox.position=translation
-//
-//      bbox.parent=this.myEntity //
-//      var theCSG = BABYLON.CSG.FromMesh(bbox) //
-      theCSG.unionInPlace(BABYLON.CSG.FromMesh(bbox)) //
-
-      bbox.dispose()
-      // next punch some holes
-      var hole=null
+      for (let idx=0; idx < (vertexData.positions.length / 3); idx++)
+      {
+        vertexData.positions[idx*3] *= dimensions.x + delta
+        vertexData.positions[1+idx*3] *= dimensions.y + delta
+        vertexData.positions[2+idx*3] *= dimensions.z + delta
+        vertexData.positions[idx*3] = Math.round((vertexData.positions[idx*3] + translation.x - 0.5)*1000)/1000
+        vertexData.positions[1+idx*3] = Math.round((vertexData.positions[1+idx*3] + translation.y - 0.5)*1000)/1000
+        vertexData.positions[2+idx*3] = Math.round((vertexData.positions[2+idx*3] + translation.z - 0.5)*1000)/1000
+      }
+      vertexData.applyToMesh(this.theShapeMesh, true)
+      // next use some CSG magic to punch holes in the bounding box, leaving the shape
+      var theCSG=BABYLON.CSG.FromMesh(this.theShapeMesh)       
+      var hole=BABYLON.Mesh.CreateBox("hole",1-delta)
       for (let dx=0; dx < this.x; dx++) {
         for (let dy=0; dy < this.y; dy++) {
           for (let dz=0; dz < this.z; dz++) {
             if (!this.isVisible(dx, dy, dz)) {
-                hole=BABYLON.Mesh.CreateBox("hole",1-delta)
                 hole.position=new BABYLON.Vector3(dx,dy,dz)
                 theCSG.subtractInPlace(BABYLON.CSG.FromMesh(hole))
-                hole.dispose()
             }
           }
         }
       }
-      // give the ShapeMesh the same parent as the individual boxes
-      this.theShapeMesh=theCSG.toMesh({scene: this.myEntity.getScene()})
-      this.theShapeMesh.parent=this.myEntity
+      hole.dispose()
+      // update the vertices in theShapeMesh based on the final CSG
+      var tempMesh=theCSG.toMesh({scene: this.theShapeMesh.getScene()})
+      vertexData = BABYLON.VertexData.ExtractFromMesh(tempMesh);
+      vertexData.applyToMesh(this.theShapeMesh)
+      tempMesh.dispose()
       // Give the mesh some Material
-      var myMaterial = new BABYLON.StandardMaterial("myMaterial", this.myEntity.getScene());
+      var myMaterial = new BABYLON.StandardMaterial("myMaterial", this.theShapeMesh.getScene());
       this.theShapeMesh.material = myMaterial;
-
     },
-    reShape() {
-//      debugger
-      console.log("reShape")
-      this.myBoxes=this.$refs.myBoxes
-      if (this.theShapeMesh)  { this.theShapeMesh.dispose()}
-      // the boxes that make up this shape have now been created.
-      // We will merge them into one shape and and hide the individual boxes
-      var theCSG=BABYLON.CSG.FromMesh(this.myBoxes[0].$entity)
-      this.myBoxes.forEach(box => {
-        if (box.$entity)  { 
-          theCSG.unionInPlace(BABYLON.CSG.FromMesh(box.$entity)) 
-        }
-      })
-      // make the shape a little bit smaller. Start with the edges.
-      var bbox=BABYLON.Mesh.CreateBox("bbox",1)
-      bbox.parent=this.myBoxes[0].$entity.parent
-      var dimensions=new BABYLON.Vector3(this.x, this.y, this.z)
-      var translation=dimensions.multiplyByFloats(0.5,0.5,0.5)
-      translation.addInPlace({x:-0.5, y:-0.5, z:-0.5})
-      var delta=-0.05
-      dimensions=dimensions.addInPlace({x:delta, y:delta, z:delta})
-      bbox.scaling=dimensions
-      bbox.position=translation
-      theCSG.intersectInPlace(BABYLON.CSG.FromMesh(bbox))
-      bbox.dispose()
-      // next punch some holes
-      var hole=null
-      for (let dx=0; dx < this.x; dx++) {
-        for (let dy=0; dy < this.y; dy++) {
-          for (let dz=0; dz < this.z; dz++) {
-            if (!this.isVisible(dx, dy, dz)) {
-                hole=BABYLON.Mesh.CreateBox("hole",1-delta)
-                hole.position=new BABYLON.Vector3(dx,dy,dz)
-                theCSG.subtractInPlace(BABYLON.CSG.FromMesh(hole))
-                hole.dispose()
-            }
-          }
-        }
-      }
-      // give the ShapeMesh the same parent as the individual boxes
-      this.theShapeMesh=theCSG.toMesh({scene: this.myEntity.getScene()})
-      this.theShapeMesh.parent=this.myEntity
-
-      this.myBoxes.forEach(box => {
-        if (box.$entity) {
-          box.$entity.isVisible=false;
-//          box.$entity.scaling=new BABYLON.Vector3(0.98,0.98,0.98)
-//          box.$entity.parent=this.theShapeMesh;
-          box.$entity.checkCollisions=true;
-        }
-      })
-
-      // give a material
-      var myMaterial = new BABYLON.StandardMaterial("myMaterial", this.myEntity.getScene());
-      /*
-      myMaterial.diffuseTexture=new BABYLON.Texture("materials/Wood11_col.jpg", this.myBoxes[0].$entity.getScene())
-      myMaterial.diffuseTexture.uScale=0.2
-      myMaterial.diffuseTexture.vScale=0.2
-      myMaterial.bumpTexture=new BABYLON.Texture("materials/Wood11_nrm.jpg", this.myBoxes[0].$entity.getScene())
-      myMaterial.bumpTexture.uScale=0.2
-      myMaterial.bumpTexture.vScale=0.2
-      myMaterial.specularTexture=new BABYLON.Texture("materials/Wood11_rgh.jpg", this.myBoxes[0].$entity.getScene())
-      myMaterial.specularTexture.uScale=0.2
-      myMaterial.specularTexture.vScale=0.2
-      */
-      this.theShapeMesh.material = myMaterial;
-    }
   },
   computed: {
     stateString() {
