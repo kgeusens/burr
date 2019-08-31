@@ -93,8 +93,10 @@ export default {
       // give the ShapeMesh the same parent as the individual boxes
       this.theShapeMesh=theCSG.toMesh({scene: this.myEntity.getScene()})
       this.theShapeMesh.parent=this.myEntity
-      this.theShapeMesh.computeWorldMatrix(true)
-      console.log("theShapeMesh", this.theShapeMesh)
+      // Give the mesh some Material
+      var myMaterial = new BABYLON.StandardMaterial("myMaterial", this.myEntity.getScene());
+      this.theShapeMesh.material = myMaterial;
+
     },
     reShape() {
 //      debugger
@@ -149,8 +151,8 @@ export default {
       })
 
       // give a material
+      var myMaterial = new BABYLON.StandardMaterial("myMaterial", this.myEntity.getScene());
       /*
-      var myMaterial = new BABYLON.StandardMaterial("myMaterial", this.myBoxes[0].$entity.getScene());
       myMaterial.diffuseTexture=new BABYLON.Texture("materials/Wood11_col.jpg", this.myBoxes[0].$entity.getScene())
       myMaterial.diffuseTexture.uScale=0.2
       myMaterial.diffuseTexture.vScale=0.2
@@ -160,8 +162,8 @@ export default {
       myMaterial.specularTexture=new BABYLON.Texture("materials/Wood11_rgh.jpg", this.myBoxes[0].$entity.getScene())
       myMaterial.specularTexture.uScale=0.2
       myMaterial.specularTexture.vScale=0.2
-      this.theShapeMesh.material = myMaterial;
       */
+      this.theShapeMesh.material = myMaterial;
     }
   },
   computed: {
