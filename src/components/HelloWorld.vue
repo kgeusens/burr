@@ -166,11 +166,12 @@ export default {
   methods: {
     updateCurrentState() {
       // return the StateString of the current puzzle taking manual moves into account
+      console.log("updateCurrentState", this.$refs.someProblem.$refs.someShapes[0].theShapeMesh)
       let tempState=[]
       let fsPos=null // first shape position. Needed to normalize (first shape is [0,0,0])
       if (this.$refs.someProblem) {
-        for (let ss of this.$refs.someProblem.myShapeEntities) { // iterate over the shapes
-          let ssPos = ss.getChildMeshes(true)[0].getAbsolutePosition() // theShapeMesh
+        for (let ss of this.$refs.someProblem.$refs.someShapes) { // iterate over the Shapes
+          let ssPos = ss.theShapeMesh.getAbsolutePosition() // theShapeMesh
           let matrix=this.myEntity.getWorldMatrix().invert()
           let correctedPos=BABYLON.Vector3.TransformCoordinates(ssPos,matrix)
           correctedPos.x = Math.round(correctedPos.x)
@@ -331,7 +332,6 @@ export default {
         for (let idx of this.calcNextMovingShapes(this.currentStateIndex)) {
           if (this.$refs.someProblem.myShapeEntities[idx] != undefined) {
             if (this.guiHighlightNextMove.isChecked) {
-              console.log("highlighting Mesh")
               this.highlightLayer.addMesh(this.$refs.someProblem.myShapeEntities[idx].getChildMeshes(true)[0], BABYLON.Color3.Green())
             }
             else

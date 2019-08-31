@@ -1,8 +1,8 @@
 <template>
   <div>
     <div v-for="shape in shapes" :key="shape.id">
-      <Entity ref="someShape" v-model="myShapeEntities[shape.id]" :position="shape.position" :rotation="rotate(shape.rotationIndex)">
-        <BurrShape :entity="shape.entity">
+      <Entity v-model="myShapeEntities[shape.id]" :position="shape.position" :rotation="rotate(shape.rotationIndex)">
+        <BurrShape ref="someShapes" :entity="shape.entity">
         </BurrShape>
       </Entity>
     </div>

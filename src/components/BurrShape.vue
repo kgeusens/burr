@@ -1,7 +1,7 @@
 <template>
   <div>
       <Box v-model="theShapeMesh" v-on:complete="onComplete">
-        <Box v-for="vox in voxelPositions" :key="vox.id" ref="myBoxes" :position="vox.position" @complete="onBoxComplete">
+        <Box v-for="vox in voxelPositions" :key="vox.id" :position="vox.position" @complete="onBoxComplete">
         </Box>
       </Box>  
   </div>
@@ -38,14 +38,13 @@ export default {
   },
   methods: {
     onComplete() {
-      console.log("onComplete", this._uid, this.theShapeMesh)
-      this.buildShapeMesh()
+      console.log("onComplete", this._uid)
+//      this.buildShapeMesh()
     },
     onBoxComplete(evt) {
-      console.log("onBoxComplete", this._uid, this.$refs.myBoxes.length)
+      console.log("onBoxComplete", this._uid)
       evt.entity.isVisible=false;
       evt.entity.scaling=new BABYLON.Vector3(0.98,0.98,0.98)
-//      evt.entity.parent=this.theShapeMesh;
       evt.entity.checkCollisions=true;
     },
     isVisible(dx,dy,dz) { return ( this.stateString[ (dz)*this.x*this.y + (dy)*this.x + (dx) ] == "#") },
