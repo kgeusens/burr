@@ -166,7 +166,6 @@ export default {
   methods: {
     updateCurrentState() {
       // return the StateString of the current puzzle taking manual moves into account
-      console.log("updateCurrentState", this.$refs.someProblem.$refs.someShapes[0].theShapeMesh)
       let tempState=[]
       let fsPos=null // first shape position. Needed to normalize (first shape is [0,0,0])
       if (this.$refs.someProblem) {
@@ -376,6 +375,9 @@ export default {
     },
     myCurrentState(newVal, oldVal) {
     },
+    statusArray() {
+      console.log("statusArray", this.statusArray)
+    }
   },
   props: {
     msg: String,

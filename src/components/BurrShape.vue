@@ -1,6 +1,6 @@
 <template>
   <div>
-      <Box v-model="theShapeMesh" v-on:complete="onComplete">
+      <Box v-model="theShapeMesh" v-on:complete="onComplete" :position="shapePosition">
         <Box v-for="vox in voxelPositions" :key="vox.id" :position="vox.position" @complete="onBoxComplete">
         </Box>
       </Box>  
@@ -18,11 +18,11 @@ export default {
   props: 
   {
     entity: null,
-    id: null
+    id: null,
+    shapePosition: {type: Array, default: function() { return [0,0,0] } }
   }, 
   data() {
     return {
-      myEntity: null,
       theShapeMesh: null
     }
   },
@@ -30,12 +30,13 @@ export default {
     if (this.theShapeMesh) this.theShapeMesh.dispose()
   },
   updated() {
-//    console.log("updated", this._uid)
+    console.log("updated", this._uid, this.voxelPositions, this.theShapeMesh)
+    this.buildShapeMesh()
   },
   methods: {
     onComplete() {
       console.log("onComplete", this._uid)
-      this.buildShapeMesh()
+//      this.buildShapeMesh() // called for new shape that did not exist before. Not on updates.
     },
     onBoxComplete(evt) {
       console.log("onBoxComplete", this._uid)
@@ -52,10 +53,13 @@ export default {
 
       // Build the shape using CSG only
       // Calculate the vertices of the bounding box starting from a standard box (default of theShapeMesh)
-      var vertexData = BABYLON.VertexData.ExtractFromMesh(this.theShapeMesh);
+      var delta=-0.2
+      var hole=BABYLON.Mesh.CreateBox("hole",1)
+      hole.parent=this.theShapeMesh.parent
+      var vertexData = BABYLON.VertexData.ExtractFromMesh(hole);
+      hole.dispose()
       var dimensions=new BABYLON.Vector3(this.x, this.y, this.z)
       var translation=dimensions.multiplyByFloats(0.5,0.5,0.5)
-      var delta=-0.05
       for (let idx=0; idx < (vertexData.positions.length / 3); idx++)
       {
         vertexData.positions[idx*3] *= dimensions.x + delta
@@ -66,9 +70,11 @@ export default {
         vertexData.positions[2+idx*3] = Math.round((vertexData.positions[2+idx*3] + translation.z - 0.5)*1000)/1000
       }
       vertexData.applyToMesh(this.theShapeMesh, true)
+
       // next use some CSG magic to punch holes in the bounding box, leaving the shape
       var theCSG=BABYLON.CSG.FromMesh(this.theShapeMesh)       
       var hole=BABYLON.Mesh.CreateBox("hole",1-delta)
+      hole.parent=this.theShapeMesh.parent
       for (let dx=0; dx < this.x; dx++) {
         for (let dy=0; dy < this.y; dy++) {
           for (let dz=0; dz < this.z; dz++) {
@@ -82,9 +88,11 @@ export default {
       hole.dispose()
       // update the vertices in theShapeMesh based on the final CSG
       var tempMesh=theCSG.toMesh({scene: this.theShapeMesh.getScene()})
+      tempMesh.parent=this.theShapeMesh.parent
       vertexData = BABYLON.VertexData.ExtractFromMesh(tempMesh);
-      vertexData.applyToMesh(this.theShapeMesh)
       tempMesh.dispose()
+
+      vertexData.applyToMesh(this.theShapeMesh)
       // Give the mesh some Material
       var myMaterial = new BABYLON.StandardMaterial("myMaterial", this.theShapeMesh.getScene());
       this.theShapeMesh.material = myMaterial;
@@ -114,9 +122,6 @@ export default {
   watch: {
     voxelPositions(newval,oldval) {
       console.log("watch voxelPositions")
-    },
-    myEntity() {
-      console.log("watch myEntity")
     }
   }
 }
