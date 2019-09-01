@@ -1,8 +1,8 @@
 <template>
   <div>
     <div v-for="shape in shapes" :key="shape.id">
-      <Entity v-model="myShapeEntities[shape.id]" :position="shape.position" :rotation="rotate(shape.rotationIndex)">
-        <BurrShape ref="someShapes" :entity="shape.entity">
+      <Entity :position="shape.position" :rotation="rotate(shape.rotationIndex)">
+        <BurrShape ref="someShapes" :entity="shape.entity" :id="shape.id">
         </BurrShape>
       </Entity>
     </div>
@@ -28,7 +28,6 @@ export default {
     return {
       id: null,
       currentSolution: 0,
-      myShapeEntities: []
     }
   },
   mounted () {

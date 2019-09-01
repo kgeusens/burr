@@ -327,15 +327,15 @@ export default {
       }
     },
     updateVisuals() {
-//      console.log("updateVisuals", this.myCurrentState)
-      if (this.currentStateIndex >= 0) {
-        for (let idx of this.calcNextMovingShapes(this.currentStateIndex)) {
-          if (this.$refs.someProblem.myShapeEntities[idx] != undefined) {
-            if (this.guiHighlightNextMove.isChecked) {
-              this.highlightLayer.addMesh(this.$refs.someProblem.myShapeEntities[idx].getChildMeshes(true)[0], BABYLON.Color3.Green())
-            }
-            else
-              this.highlightLayer.removeMesh(this.$refs.someProblem.myShapeEntities[idx].getChildMeshes(true)[0], BABYLON.Color3.Green())
+      var nextMoverIds = this.calcNextMovingShapes(this.currentStateIndex)
+      console.log("updateVisuals", this.currentStateIndex)
+      if (this.currentStateIndex >= 0 && this.$refs.someProblem.$refs.someShapes) {
+        for (let ss of this.$refs.someProblem.$refs.someShapes) { // iterate over the Shapes
+          if (nextMoverIds.includes(ss.id.toString()) && this.guiHighlightNextMove.isChecked) {
+              this.highlightLayer.addMesh(ss.theShapeMesh, BABYLON.Color3.Green())
+          }
+          else {
+              this.highlightLayer.removeMesh(ss.theShapeMesh, BABYLON.Color3.Green())
           }
         }
       }
@@ -371,10 +371,6 @@ export default {
     },
     currentStateIndex(newVal,oldVal) {
       this.guiCurrentMove.text="current state index: " + newVal
-      for (let idx of this.calcNextMovingShapes(oldVal)) {
-        if (this.$refs.someProblem.myShapeEntities[idx] != undefined)
-          this.highlightLayer.removeMesh(this.$refs.someProblem.myShapeEntities[idx].getChildMeshes(true)[0], BABYLON.Color3.Green())
-      }
       if ( (newVal >=0) && (this.statusArray.pieces[newVal].length > this.statusArray.pieces[newVal+2].length) )
         console.log("removable piece")
       this.updateVisuals()

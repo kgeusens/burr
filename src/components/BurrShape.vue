@@ -17,29 +17,25 @@ export default {
   components: { Box, Entity },
   props: 
   {
-    entity: null
+    entity: null,
+    id: null
   }, 
   data() {
     return {
-      id: null,
       myEntity: null,
       theShapeMesh: null
     }
-  },
-  mounted () {
-    this.id = this._uid
   },
   beforeDestroy() {
     if (this.theShapeMesh) this.theShapeMesh.dispose()
   },
   updated() {
 //    console.log("updated", this._uid)
-//    this.buildShape()
   },
   methods: {
     onComplete() {
       console.log("onComplete", this._uid)
-//      this.buildShapeMesh()
+      this.buildShapeMesh()
     },
     onBoxComplete(evt) {
       console.log("onBoxComplete", this._uid)
