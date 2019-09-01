@@ -328,8 +328,7 @@ export default {
     },
     updateVisuals() {
       var nextMoverIds = this.calcNextMovingShapes(this.currentStateIndex)
-      console.log("updateVisuals", this.currentStateIndex)
-      if (this.currentStateIndex >= 0 && this.$refs.someProblem.$refs.someShapes) {
+      if (this.$refs.someProblem.$refs.someShapes) {
         for (let ss of this.$refs.someProblem.$refs.someShapes) { // iterate over the Shapes
           if (nextMoverIds.includes(ss.id.toString()) && this.guiHighlightNextMove.isChecked) {
               this.highlightLayer.addMesh(ss.theShapeMesh, BABYLON.Color3.Green())
