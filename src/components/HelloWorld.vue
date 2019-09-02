@@ -350,7 +350,7 @@ export default {
     myFile(newFile, oldFile) {
       var self=this
       if (newFile) {
-        self.jsonFile=defaultData;
+//        self.jsonFile=defaultData;
         var reader = new FileReader()
         reader.onload = function() {
           var binData = new Uint8Array(reader.result);
