@@ -76,22 +76,23 @@ export default {
   name: 'HelloWorld',
   components: {BurrProblem, Scene, Camera, Entity, Box, HemisphericLight, Property},
   data() {
-     return {
-       myFileName: "box.xmpuzzle",
-       myEntity: null,
-       myCamera: null,
-       myProblem: null,
-       myBoundingBox: null,
-       myPlayMode: true, // allow manual play mode (slide pieces by hand)
-       scene: null, // workaround for myScene not being populated by v-model
-       jsonFile: defaultData,
-       engine: null,
-       activeProblemIndex: 0,
-       pickedMeshes: [],
-       highlightLayer: null,
-       myCurrentState: "",
-       myClickCounter: 0 // used as trigger to make calculated values responsive
-     }
+    return {
+      myFileName: "box.xmpuzzle",
+      myEntity: null,
+      myCamera: null,
+      myProblem: null,
+      myBoundingBox: null,
+      myPlayMode: true, // allow manual play mode (slide pieces by hand)
+      scene: null, // workaround for myScene not being populated by v-model
+      jsonFile: defaultData,
+      engine: null,
+      activeProblemIndex: 0,
+      pickedMeshes: [],
+      highlightLayer: null,
+      myCurrentState: "",
+      myClickCounter: 0, // used as trigger to make calculated values responsive
+      pickedMeshes: []
+    }
   },  
   created () {
   // this code is used to load a model from a remote server over http
@@ -252,6 +253,14 @@ export default {
       switch(true) {
         case ( result.hit && evt.button==0): 
           if (this.myPlayMode == true) {
+            if (this.$refs.someProblem) {
+              for (let ss of this.$refs.someProblem.$refs.someShapes) { // iterate over the Shapes
+                if (ss.theShapeMesh == result.pickedMesh) {
+                  this.pickedShapes=[ss.theShapeMesh]
+                  console.log(ss.theShapeMesh.position)
+                }
+              }
+            }
             this.pickedMeshes=[result.pickedMesh]
             this.holdingNormal=result.getNormal(true)
             this.holdingY=this.scene.pointerY
@@ -274,12 +283,13 @@ export default {
     },
     onPointerUp(evt, result) {
       // round position to nearest integers in local coordinates
-      this.pickedMeshes.forEach(function(shape) {
-         shape.setPositionWithLocalVector({
-           x: Math.round(shape.position.x),
-           y: Math.round(shape.position.y),
-           z: Math.round(shape.position.z),
-         })
+      this.pickedShapes.forEach(function(shape) {
+         shape.position={
+           x:Math.round(shape.position.x),
+           y:Math.round(shape.position.y),
+           z:Math.round(shape.position.z)
+         }
+         console.log(shape.position)
       })
       this.myCamera.attachControl(this.scene.getEngine().getRenderingCanvas())
       this.pickedMeshes = []
