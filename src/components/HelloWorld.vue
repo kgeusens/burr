@@ -87,11 +87,10 @@ export default {
       jsonFile: defaultData,
       engine: null,
       activeProblemIndex: 0,
-      pickedMeshes: [],
       highlightLayer: null,
       myCurrentState: "",
       myClickCounter: 0, // used as trigger to make calculated values responsive
-      pickedMeshes: []
+      pickedShapes: []
     }
   },  
   created () {
@@ -257,11 +256,9 @@ export default {
               for (let ss of this.$refs.someProblem.$refs.someShapes) { // iterate over the Shapes
                 if (ss.theShapeMesh == result.pickedMesh) {
                   this.pickedShapes=[ss.theShapeMesh]
-                  console.log(ss.theShapeMesh.position)
                 }
               }
             }
-            this.pickedMeshes=[result.pickedMesh]
             this.holdingNormal=result.getNormal(true)
             this.holdingY=this.scene.pointerY
             this.myCamera.detachControl(this.scene.getEngine().getRenderingCanvas())
@@ -289,10 +286,9 @@ export default {
            y:Math.round(shape.position.y),
            z:Math.round(shape.position.z)
          }
-         console.log(shape.position)
       })
       this.myCamera.attachControl(this.scene.getEngine().getRenderingCanvas())
-      this.pickedMeshes = []
+      this.pickedShapes = []
       this.updateCurrentState()
     },
     onPointerMove(evt, result) {
@@ -301,26 +297,26 @@ export default {
       //
       if (this.myPlayMode == true) {
         var maxDelta=0.1 // Maximum distance to travel per cycle. Should be large enough to collide.
-        if (this.pickedMeshes.length && (this.pickedMeshes.length < this.numberOfShapes) ) {
+        if (this.pickedShapes.length && (this.pickedShapes.length < this.numberOfShapes) ) {
           var delta=Math.sign(this.scene.pointerY-this.holdingY)*Math.min(Math.abs(this.scene.pointerY-this.holdingY)*this.getDragRatio(), maxDelta) // how much did the pointer Y change during drag
           if (delta) {
             this.holdingY = this.scene.pointerY 
-            for (let shape of this.pickedMeshes) {
+            for (let shape of this.pickedShapes) {
               // Move the selected mesh over the corrected diff vector
               shape.translate(this.holdingNormal, delta, BABYLON.Space.WORLD)
               shape.computeWorldMatrix(true)
               // check for collisions
-              for (let obstacle of this.myProblem.getChildren()) {
+              for (let obstacle of this.$refs.someProblem.$refs.someShapes) {
                 let hit=false
-                var obstacleMesh=obstacle.getChildren()[0]
-                if ( !(this.pickedMeshes.includes(obstacleMesh))) { // only continue if obstacleMesh is not yet picked
+                var obstacleMesh=obstacle.theShapeMesh
+                if ( !(this.pickedShapes.includes(obstacleMesh))) { // only continue if obstacleMesh is not yet picked
                   // iterate the individual voxels and check for collision
                   for (let pickedVoxel of shape.getChildren()) {
                     pickedVoxel.computeWorldMatrix(true)
                     for (let obstacleVoxel of obstacleMesh.getChildren()) {
                       if (pickedVoxel.intersectsMesh(obstacleVoxel,true)) {
                         hit=true;
-                        this.pickedMeshes.push(obstacleMesh)
+                        this.pickedShapes.push(obstacleMesh)
                         break
                       } 
                     }
@@ -386,7 +382,6 @@ export default {
     myCurrentState(newVal, oldVal) {
     },
     statusArray() {
-      console.log("statusArray", this.statusArray)
     }
   },
   props: {
