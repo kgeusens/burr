@@ -27,9 +27,6 @@ export default {
       theShapeMesh: null
     }
   },
-  beforeDestroy() {
-    if (this.theShapeMesh) this.theShapeMesh.dispose()
-  },
   updated() {
 //    console.log("updated", this._uid, this.voxelPositions, this.theShapeMesh)
     this.buildShapeMesh()

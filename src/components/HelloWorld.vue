@@ -10,7 +10,7 @@
         <Property name="isVisible" :any="false"/>
       </Box>
       <Entity name="myProblem" v-model="myProblem">
-        <BurrProblem ref="someProblem" :problem="problems[0]" :entities="shapes">
+        <BurrProblem ref="someProblem" v-model="myCurrentState" :problem="problems[0]" :entities="shapes">
         </BurrProblem>
       </Entity>
     </Entity>
@@ -281,11 +281,11 @@ export default {
     onPointerUp(evt, result) {
       // round position to nearest integers in local coordinates
       this.pickedShapes.forEach(function(shape) {
-         shape.position={
-           x:Math.round(shape.position.x),
-           y:Math.round(shape.position.y),
-           z:Math.round(shape.position.z)
-         }
+         shape.position=new BABYLON.Vector3(
+           Math.round(shape.position.x),
+           Math.round(shape.position.y),
+           Math.round(shape.position.z)
+         )
       })
       this.myCamera.attachControl(this.scene.getEngine().getRenderingCanvas())
       this.pickedShapes = []
@@ -326,8 +326,6 @@ export default {
               }
             }
           }  
-        }
-        else {
         }
       }
     },
@@ -378,8 +376,6 @@ export default {
       if ( (newVal >=0) && (this.statusArray.pieces[newVal].length > this.statusArray.pieces[newVal+2].length) )
         console.log("removable piece")
       this.updateVisuals()
-    },
-    myCurrentState(newVal, oldVal) {
     },
     statusArray() {
     }
