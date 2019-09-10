@@ -120,7 +120,7 @@ export default {
   },
   watch: {
     voxelPositions(newval,oldval) {
-      console.log("watch voxelPositions")
+//      console.log("watch voxelPositions")
     }
   }
 }

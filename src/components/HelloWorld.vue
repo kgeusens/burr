@@ -90,7 +90,9 @@ export default {
       highlightLayer: null,
       myCurrentState: "",
       myClickCounter: 0, // used as trigger to make calculated values responsive
-      pickedShapes: []
+      pickedShapes: [],
+      selectedShapeId: null,
+      activeSeparations: null
     }
   },  
   created () {
@@ -124,7 +126,7 @@ export default {
       let center=[(sol._attributes.x-1)/2, (sol._attributes.y-1)/2, (sol._attributes.z-1)/2]
       return {scaling: scaling, center: center }
     },
-    numberOfShapes() { return this.myProblem.getChildren().length },
+    numberOfShapes() { return this.jsonFile.puzzle[0].problems[0].problem[0].solutions[0].solution[0].separation[0].pieces[0]._attributes.count },
     statusArray() {
       // returns an array of State strings. The index is the move number of the solution.
       // a State String is the contatenation of the positions of the puzzle pieces
@@ -170,20 +172,48 @@ export default {
       let fsPos=null // first shape position. Needed to normalize (first shape is [0,0,0])
       if (this.$refs.someProblem) {
         for (let ss of this.$refs.someProblem.$refs.someShapes) { // iterate over the Shapes
-          let ssPos = ss.theShapeMesh.getAbsolutePosition() // theShapeMesh
-          let matrix=this.myEntity.getWorldMatrix().invert()
-          let correctedPos=BABYLON.Vector3.TransformCoordinates(ssPos,matrix)
+          let ssPos = ss.theShapeMesh.getAbsolutePosition() // theShapeMesh absolute position
+          let matrix=this.myEntity.getWorldMatrix().invert() 
+          let correctedPos=BABYLON.Vector3.TransformCoordinates(ssPos,matrix) // relative position to puzzle container
           correctedPos.x = Math.round(correctedPos.x)
           correctedPos.y = Math.round(correctedPos.y)
           correctedPos.z = Math.round(correctedPos.z)
-          if (fsPos == null) fsPos = correctedPos
-          tempState.push(correctedPos.x - fsPos.x)
+          if (fsPos == null) fsPos = correctedPos // First Shapes position
+          tempState.push(correctedPos.x - fsPos.x) // Shape position relative to first shape
           tempState.push(correctedPos.y - fsPos.y)
           tempState.push(correctedPos.z - fsPos.z)
         }
         this.myCurrentState=tempState.join(" ")
       }
     },
+/*    getSeparationStates(sep) {
+      var allArrays=[]
+      var jsonArrays=[]
+      var allPieces=[]
+      for (let state of sep.state) {
+        let relArray=[]
+        let tempArray=new Array
+        let pieces=sep.pieces[0]._text[0].split(" ")
+        let dx=state.dx[0]._text[0].split(" ")
+        let dy=state.dy[0]._text[0].split(" ")
+        let dz=state.dz[0]._text[0].split(" ")
+        for (let idx in dx)
+        { relArray.push(dx[idx] - dx[0]) // normalize so the first piece is always [0,0,0]
+          relArray.push(dy[idx] - dy[0])
+          relArray.push(dz[idx] - dz[0])
+          let absArray=[]
+          absArray.push(dx[idx])
+          absArray.push(dy[idx])
+          absArray.push(dz[idx])
+          tempArray[pieces[idx]]=absArray.join(" ")
+        }
+        allArrays.push(relArray.join(" "))
+        jsonArrays.push(tempArray)
+        allPieces.push(sep.pieces[0]._text[0])
+      }
+      return {pieces:allPieces, states:allArrays, statesPerShape:jsonArrays}
+    },
+*/    
     calcNextMovingShapes(move) {
       var tmpArray=new Array
       for (let idx in this.statusArray.statesPerShape[move]) {
@@ -256,6 +286,8 @@ export default {
               for (let ss of this.$refs.someProblem.$refs.someShapes) { // iterate over the Shapes
                 if (ss.theShapeMesh == result.pickedMesh) {
                   this.pickedShapes=[ss.theShapeMesh]
+                  this.selectedShapeId=ss.id
+                  console.log("onPointerDown on shape id", ss.id)
                 }
               }
             }
@@ -265,6 +297,7 @@ export default {
           }
           break
         case ( !result.hit && evt.button==0):
+          this.selectedShapeId=null
           break
         case ( result.hit && evt.button==2):
           if (result.pickedMesh.material.alpha<1)
@@ -367,6 +400,8 @@ export default {
     jsonFile(newVal) {
       this.myCurrentState=this.statusArray.states[0]
       this.guiHighlightNextMove.isChecked = false
+      this.activeSeparations=[this.jsonFile.puzzle[0].problems[0].problem[0].solutions[0].solution[0].separation[0]]
+      console.log("jsonFile", this.jsonFile)
     },
     complexity() {
       this.guiComplexity.text="complexity: " + this.complexity
@@ -377,7 +412,37 @@ export default {
         console.log("removable piece")
       this.updateVisuals()
     },
-    statusArray() {
+    statusArray(newval, oldval) {
+//      console.log("statusArray", newval)
+    },
+    myCurrentState(newval, oldval) {
+      if (!oldval) return
+
+      var ov=oldval.split(" ")
+      var nv=newval.split(" ")
+      var movedShapes=[]
+      // determine shape ids that moved
+      for (let ss of this.$refs.someProblem.$refs.someShapes) {
+        if ( (nv[ss.id*3] != ov[ss.id*3]) || (nv[ss.id*3+1] != ov[ss.id*3+1]) || (nv[ss.id*3+2] != ov[ss.id*3+2]) ) {
+          movedShapes.push(ss)
+          console.log("changed shape id", ss.id)
+        }
+      }
+      // detect separations
+      var hit=false
+      for (let ss of this.$refs.someProblem.$refs.someShapes) {
+        if (!movedShapes.includes(ss)) {
+          for ( let ms of movedShapes ) { 
+            if (ss.theShapeMesh.intersectsMesh(ms.theShapeMesh,true)) { 
+              console.log("hit")
+              hit=true
+            }
+          }
+        }
+      }
+      if ( !hit ) {
+        console.log("SEPERATION DETECTED")
+      }
     }
   },
   props: {

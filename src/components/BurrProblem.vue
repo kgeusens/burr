@@ -85,7 +85,7 @@ export default {
   },
   watch: {
     value() {
-      console.log("state changed", this.value)
+//      console.log("state changed", this.value)
     }
   }
 }
