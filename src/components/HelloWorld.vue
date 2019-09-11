@@ -92,7 +92,7 @@ export default {
       myClickCounter: 0, // used as trigger to make calculated values responsive
       pickedShapes: [],
       selectedShapeId: null,
-      activeSeparations: null
+      partitions: []
     }
   },  
   created () {
@@ -158,6 +158,41 @@ export default {
         }
         if (sep.separation != undefined) getStates(sep.separation[0])
         return {pieces:allPieces, states:allArrays, statesPerShape:jsonArrays}
+      }
+      return getStates(separation)
+    },
+    separations() {
+      var sepArray=[]
+      var separation=this.jsonFile.puzzle[0].problems[0].problem[0].solutions[0].solution[0].separation
+      var getStates = function(seps) {
+        for (let sep of seps) {
+          var allArrays=[]
+          var jsonArrays=[]
+          for (let state of sep.state) {
+            var relArray=[]
+            var tempArray=new Array
+            var piecelist=sep.pieces[0]._text[0]
+            let pieces=piecelist.split(" ")
+            let dx=state.dx[0]._text[0].split(" ")
+            let dy=state.dy[0]._text[0].split(" ")
+            let dz=state.dz[0]._text[0].split(" ")
+            for (let idx in dx)
+            { relArray.push(dx[idx] - dx[0]) // normalize so the first piece is always [0,0,0]
+              relArray.push(dy[idx] - dy[0])
+              relArray.push(dz[idx] - dz[0])
+              let absArray=[]
+              absArray.push(dx[idx])
+              absArray.push(dy[idx])
+              absArray.push(dz[idx])
+              tempArray[pieces[idx]]=absArray.join(" ")
+            }
+            allArrays.push(relArray.join(" "))
+            jsonArrays.push(tempArray)
+          }
+          sepArray[piecelist]={separation: sep, states:allArrays, statesPerShape:jsonArrays}
+          if (sep.separation != undefined) getStates(sep.separation)
+        }
+        return sepArray
       }
       return getStates(separation)
     },
@@ -362,6 +397,37 @@ export default {
         }
       }
     },
+    calculatePartitions() {
+      var unassignedShapes=[]
+      var partitions=[]
+      var partitionIds=[]
+      var idx=0
+
+      for (let ss of this.$refs.someProblem.$refs.someShapes) {
+        unassignedShapes[ss.id]=ss
+      }
+
+      for (let ss of unassignedShapes) {
+        if (ss != undefined) { 
+          partitions[idx]=[ss]
+          partitionIds[idx]=[ss.id]
+          delete unassignedShapes[ss.id]
+          for (let ps of partitions[idx]) {
+            for ( let ms of unassignedShapes ) { 
+              if ( (ms != undefined) && ps.theShapeMesh.intersectsMesh(ms.theShapeMesh,true)) { 
+                partitions[idx].push(ms)
+                partitionIds[idx].push(ms.id)
+                delete unassignedShapes[ms.id]
+              }
+            }
+          }
+          partitionIds[idx]=partitionIds[idx].sort( (a, b) => a - b).join(" ")
+          idx++
+        }
+      }
+      this.partitions={shapes:partitions, ids:partitionIds}
+      // need to store the result permanently somewhere
+    },
     updateVisuals() {
       var nextMoverIds = this.calcNextMovingShapes(this.currentStateIndex)
       if (this.$refs.someProblem.$refs.someShapes) {
@@ -400,7 +466,6 @@ export default {
     jsonFile(newVal) {
       this.myCurrentState=this.statusArray.states[0]
       this.guiHighlightNextMove.isChecked = false
-      this.activeSeparations=[this.jsonFile.puzzle[0].problems[0].problem[0].solutions[0].solution[0].separation[0]]
       console.log("jsonFile", this.jsonFile)
     },
     complexity() {
@@ -417,32 +482,14 @@ export default {
     },
     myCurrentState(newval, oldval) {
       if (!oldval) return
-
-      var ov=oldval.split(" ")
-      var nv=newval.split(" ")
-      var movedShapes=[]
-      // determine shape ids that moved
-      for (let ss of this.$refs.someProblem.$refs.someShapes) {
-        if ( (nv[ss.id*3] != ov[ss.id*3]) || (nv[ss.id*3+1] != ov[ss.id*3+1]) || (nv[ss.id*3+2] != ov[ss.id*3+2]) ) {
-          movedShapes.push(ss)
-          console.log("changed shape id", ss.id)
-        }
+      this.calculatePartitions()
+      for (let parts of this.partitions.ids)
+      {
+        console.log("separation lookup", parts, this.separations[parts])
       }
-      // detect separations
-      var hit=false
-      for (let ss of this.$refs.someProblem.$refs.someShapes) {
-        if (!movedShapes.includes(ss)) {
-          for ( let ms of movedShapes ) { 
-            if (ss.theShapeMesh.intersectsMesh(ms.theShapeMesh,true)) { 
-              console.log("hit")
-              hit=true
-            }
-          }
-        }
-      }
-      if ( !hit ) {
-        console.log("SEPERATION DETECTED")
-      }
+    },
+    separations(newval, oldval) {
+      console.log("separations", newval)
     }
   },
   props: {
