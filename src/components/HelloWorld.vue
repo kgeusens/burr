@@ -171,10 +171,10 @@ export default {
       var tempArray=[]
         for (let par in this.myPartitions) {
 //          console.log("currentStateIndex myCurrentState", this.myCurrentState)
-          console.log("currentStateIndex partition", par)
+//          console.log("currentStateIndex partition", par)
           if (this.separations[par]) {
 //            console.log("currentStateIndex statelookup", this.myCurrentState[par])
-            console.log("currentStateIndex move index", this.separations[par].moves[this.myCurrentState[par]])
+//            console.log("currentStateIndex move index", this.separations[par].moves[this.myCurrentState[par]])
             tempArray[par]=this.separations[par].moves[this.myCurrentState[par]]
           }
         }
@@ -207,6 +207,17 @@ export default {
     },
     calcNextMovingShapes(move) {
       var tmpArray=[]
+      for (let par in this.myPartitions) {
+        var move=this.currentStateIndex[par]
+        if (move >= 0) {
+          for (let idx in this.separations[par].statesPerShape[move])
+          {
+            if (this.separations[par].statesPerShape[move][idx] != this.separations[par].statesPerShape[move+1][idx]) {
+              tmpArray.push(idx)
+            }
+          }
+        }
+      }
       return tmpArray
     },
     getDragRatio() {
@@ -427,15 +438,15 @@ export default {
       this.guiComplexity.text="complexity: " + this.complexity
     },
     currentStateIndex(newVal,oldVal) {
-      console.log("currentStateIndex watcher")
+//      console.log("currentStateIndex watcher")
       this.guiCurrentMove.text="current state index: " + newVal
       this.updateVisuals()
     },
     myCurrentState(newval, oldval) {
-      console.log("myCurrentState", this.myCurrentState)
+//      console.log("myCurrentState", this.myCurrentState)
     },
     separations(newval, oldval) {
-      console.log("separations", newval)
+//      console.log("separations", newval)
       this.updateCurrentState()
     }
   },
