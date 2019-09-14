@@ -10,7 +10,7 @@
         <Property name="isVisible" :any="false"/>
       </Box>
       <Entity name="myProblem" v-model="myProblem">
-        <BurrProblem ref="someProblem" v-model="myCurrentState" :problem="problems[0]" :entities="shapes">
+        <BurrProblem ref="someProblem" v-model="initialState" :problem="problems[0]" :entities="shapes">
         </BurrProblem>
       </Entity>
     </Entity>
@@ -88,11 +88,12 @@ export default {
       engine: null,
       activeProblemIndex: 0,
       highlightLayer: null,
-      myCurrentState: "",
+      myCurrentState: null,
+      initialState:"",
       myClickCounter: 0, // used as trigger to make calculated values responsive
       pickedShapes: [],
       selectedShapeId: null,
-      partitions: []
+      myPartitions: []
     }
   },  
   created () {
@@ -127,47 +128,15 @@ export default {
       return {scaling: scaling, center: center }
     },
     numberOfShapes() { return this.jsonFile.puzzle[0].problems[0].problem[0].solutions[0].solution[0].separation[0].pieces[0]._attributes.count },
-    statusArray() {
-      // returns an array of State strings. The index is the move number of the solution.
-      // a State String is the contatenation of the positions of the puzzle pieces
-      var separation=this.jsonFile.puzzle[0].problems[0].problem[0].solutions[0].solution[0].separation[0]
-      var allArrays=[]
-      var jsonArrays=[]
-      var allPieces=[]
-      var getStates = function(sep) {
-        for (let state of sep.state) {
-          let relArray=[]
-          let tempArray=new Array
-          let pieces=sep.pieces[0]._text[0].split(" ")
-          let dx=state.dx[0]._text[0].split(" ")
-          let dy=state.dy[0]._text[0].split(" ")
-          let dz=state.dz[0]._text[0].split(" ")
-          for (let idx in dx)
-          { relArray.push(dx[idx] - dx[0]) // normalize so the first piece is always [0,0,0]
-            relArray.push(dy[idx] - dy[0])
-            relArray.push(dz[idx] - dz[0])
-            let absArray=[]
-            absArray.push(dx[idx])
-            absArray.push(dy[idx])
-            absArray.push(dz[idx])
-            tempArray[pieces[idx]]=absArray.join(" ")
-          }
-          allArrays.push(relArray.join(" "))
-          jsonArrays.push(tempArray)
-          allPieces.push(sep.pieces[0]._text[0])
-        }
-        if (sep.separation != undefined) getStates(sep.separation[0])
-        return {pieces:allPieces, states:allArrays, statesPerShape:jsonArrays}
-      }
-      return getStates(separation)
-    },
     separations() {
       var sepArray=[]
       var separation=this.jsonFile.puzzle[0].problems[0].problem[0].solutions[0].solution[0].separation
       var getStates = function(seps) {
         for (let sep of seps) {
           var allArrays=[]
+          var moveArrays=[]
           var jsonArrays=[]
+          var move=0
           for (let state of sep.state) {
             var relArray=[]
             var tempArray=new Array
@@ -186,10 +155,12 @@ export default {
               absArray.push(dz[idx])
               tempArray[pieces[idx]]=absArray.join(" ")
             }
-            allArrays.push(relArray.join(" "))
-            jsonArrays.push(tempArray)
+            allArrays[move]=relArray.join(" ")
+            jsonArrays[move]=tempArray
+            moveArrays[allArrays[move]]=move
+            move++
           }
-          sepArray[piecelist]={separation: sep, states:allArrays, statesPerShape:jsonArrays}
+          sepArray[piecelist]={separation: sep, states:allArrays, statesPerShape:jsonArrays, moves:moveArrays}
           if (sep.separation != undefined) getStates(sep.separation)
         }
         return sepArray
@@ -197,16 +168,29 @@ export default {
       return getStates(separation)
     },
     currentStateIndex() {
-      return this.statusArray.states.indexOf(this.myCurrentState)
+      var tempArray=[]
+        for (let par in this.myPartitions) {
+//          console.log("currentStateIndex myCurrentState", this.myCurrentState)
+          console.log("currentStateIndex partition", par)
+          if (this.separations[par]) {
+//            console.log("currentStateIndex statelookup", this.myCurrentState[par])
+            console.log("currentStateIndex move index", this.separations[par].moves[this.myCurrentState[par]])
+            tempArray[par]=this.separations[par].moves[this.myCurrentState[par]]
+          }
+        }
+      return tempArray
     }
   },
   methods: {
     updateCurrentState() {
-      // return the StateString of the current puzzle taking manual moves into account
-      let tempState=[]
-      let fsPos=null // first shape position. Needed to normalize (first shape is [0,0,0])
-      if (this.$refs.someProblem) {
-        for (let ss of this.$refs.someProblem.$refs.someShapes) { // iterate over the Shapes
+      // return the StateStrings of the current puzzle taking manual moves into account
+      // Array, index is the string of shape ids, value is the string of positions
+      this.myCurrentState=[]
+      for (let idx in this.myPartitions) // for every partition
+      {
+        let tempState=[]
+        let fsPos=null // first shape position. Needed to normalize (first shape is [0,0,0])
+        for (let ss of this.myPartitions[idx]) { // iterate over the Shapes in the partition
           let ssPos = ss.theShapeMesh.getAbsolutePosition() // theShapeMesh absolute position
           let matrix=this.myEntity.getWorldMatrix().invert() 
           let correctedPos=BABYLON.Vector3.TransformCoordinates(ssPos,matrix) // relative position to puzzle container
@@ -218,42 +202,11 @@ export default {
           tempState.push(correctedPos.y - fsPos.y)
           tempState.push(correctedPos.z - fsPos.z)
         }
-        this.myCurrentState=tempState.join(" ")
+        this.myCurrentState[idx]=tempState.join(" ")
       }
     },
-/*    getSeparationStates(sep) {
-      var allArrays=[]
-      var jsonArrays=[]
-      var allPieces=[]
-      for (let state of sep.state) {
-        let relArray=[]
-        let tempArray=new Array
-        let pieces=sep.pieces[0]._text[0].split(" ")
-        let dx=state.dx[0]._text[0].split(" ")
-        let dy=state.dy[0]._text[0].split(" ")
-        let dz=state.dz[0]._text[0].split(" ")
-        for (let idx in dx)
-        { relArray.push(dx[idx] - dx[0]) // normalize so the first piece is always [0,0,0]
-          relArray.push(dy[idx] - dy[0])
-          relArray.push(dz[idx] - dz[0])
-          let absArray=[]
-          absArray.push(dx[idx])
-          absArray.push(dy[idx])
-          absArray.push(dz[idx])
-          tempArray[pieces[idx]]=absArray.join(" ")
-        }
-        allArrays.push(relArray.join(" "))
-        jsonArrays.push(tempArray)
-        allPieces.push(sep.pieces[0]._text[0])
-      }
-      return {pieces:allPieces, states:allArrays, statesPerShape:jsonArrays}
-    },
-*/    
     calcNextMovingShapes(move) {
-      var tmpArray=new Array
-      for (let idx in this.statusArray.statesPerShape[move]) {
-        if (this.statusArray.statesPerShape[move][idx] != this.statusArray.statesPerShape[move+1][idx]) tmpArray.push(idx)
-      }
+      var tmpArray=[]
       return tmpArray
     },
     getDragRatio() {
@@ -357,6 +310,7 @@ export default {
       })
       this.myCamera.attachControl(this.scene.getEngine().getRenderingCanvas())
       this.pickedShapes = []
+      this.calculatePartitions()
       this.updateCurrentState()
     },
     onPointerMove(evt, result) {
@@ -406,7 +360,7 @@ export default {
       for (let ss of this.$refs.someProblem.$refs.someShapes) {
         unassignedShapes[ss.id]=ss
       }
-
+      this.myPartitions=[]
       for (let ss of unassignedShapes) {
         if (ss != undefined) { 
           partitions[idx]=[ss]
@@ -422,11 +376,11 @@ export default {
             }
           }
           partitionIds[idx]=partitionIds[idx].sort( (a, b) => a - b).join(" ")
+          partitions[idx]=partitions[idx].sort( (a, b) => a.id - b.id)
+          this.myPartitions[partitionIds[idx]]=partitions[idx]
           idx++
         }
       }
-      this.partitions={shapes:partitions, ids:partitionIds}
-      // need to store the result permanently somewhere
     },
     updateVisuals() {
       var nextMoverIds = this.calcNextMovingShapes(this.currentStateIndex)
@@ -464,32 +418,25 @@ export default {
       }
     },
     jsonFile(newVal) {
-      this.myCurrentState=this.statusArray.states[0]
+      this.initialState=this.jsonFile.puzzle[0].problems[0].problem[0].solutions[0].solution[0].assembly[0]._text[0]
+//      this.updateCurrentState()
       this.guiHighlightNextMove.isChecked = false
-      console.log("jsonFile", this.jsonFile)
+      console.log("jsonFile", this.jsonFile, this.initialState)
     },
     complexity() {
       this.guiComplexity.text="complexity: " + this.complexity
     },
     currentStateIndex(newVal,oldVal) {
+      console.log("currentStateIndex watcher")
       this.guiCurrentMove.text="current state index: " + newVal
-      if ( (newVal >=0) && (this.statusArray.pieces[newVal].length > this.statusArray.pieces[newVal+2].length) )
-        console.log("removable piece")
       this.updateVisuals()
     },
-    statusArray(newval, oldval) {
-//      console.log("statusArray", newval)
-    },
     myCurrentState(newval, oldval) {
-      if (!oldval) return
-      this.calculatePartitions()
-      for (let parts of this.partitions.ids)
-      {
-        console.log("separation lookup", parts, this.separations[parts])
-      }
+      console.log("myCurrentState", this.myCurrentState)
     },
     separations(newval, oldval) {
       console.log("separations", newval)
+      this.updateCurrentState()
     }
   },
   props: {
